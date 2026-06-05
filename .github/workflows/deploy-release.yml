@@ -1,0 +1,16 @@
+name: Deploy Release Branch to Dedicated Environment
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+jobs:
+  deploy-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to dedicated environment
+        run: |
+          echo "Deploying ${{ github.ref_name }} to its dedicated INT → QA → UAT environment"
+          echo "This release branch has its own pipeline — isolated from other releases"

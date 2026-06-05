@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build and verify
+        run: mvn clean verify
+
+      - name: Sanitize branch name for artifact
+        id: sanitize
+        run: |
+          SAFE_NAME=$(echo "${{ github.ref_name }}" | sed 's|/|-|g')
+          echo "artifact_name=${SAFE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Print JAR file size
+        run: |
+          JAR=$(find target -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -1)
+          echo "JAR: $JAR"
+          ls -lh "$JAR"
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-${{ steps.sanitize.outputs.artifact_name }}
+          path: target/*.jar
+          if-no-files-found: error
